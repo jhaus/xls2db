@@ -29,10 +29,11 @@ def xls2db(infile, outfile):
         # Create the table.
         # Vulnerable to sql injection because ? is only able to handle inserts
         # I'm not sure what to do about that!
-        db_cursor.execute("create table " + s.name + " ("
-            + ','.join([s.cell(0,j).value for j in xrange(s.ncols)]) +");")
+        if s.nrows > 0:
+            db_cursor.execute("create table " + s.name + " ("
+                + ','.join([s.cell(0,j).value for j in xrange(s.ncols)]) +");")
 
-        for row in ([s.cell(i+1, j).value for j in xrange(s.ncols)] for i in xrange(s.nrows-1)):
+        for row in ([s.cell(i+1, j).value for j in xrange(s.ncols)] for i in xrange(s.nrows-1)) if s.nrows > 1:
             # Change blank/empty entries into nulls
             map_over = lambda l: lambda f: map(f, l)
             @map_over(row)
