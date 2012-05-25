@@ -33,19 +33,10 @@ def xls2db(infile, outfile):
             db_cursor.execute("create table " + s.name + " ("
                 + ','.join([s.cell(0,j).value for j in xrange(s.ncols)]) +");")
 
-        for row in ([s.cell(i+1, j).value for j in xrange(s.ncols)] for i in xrange(s.nrows-1)) if s.nrows > 1:
-            # Change blank/empty entries into nulls
-            map_over = lambda l: lambda f: map(f, l)
-            @map_over(row)
-            def map_fxn(item):
-                if item == xlrd.empty_cell.value or item == u'':
-                    return None
-                else:
-                    return item
-
-            # Able to do a hack to use ?'s
-            db_cursor.execute("insert into " + s.name + ' values ('
-                + ','.join(itertools.repeat('?', s.ncols)) +");", row)
+        if s.nrows > 1:
+            tmp_sql = "insert into " + s.name + ' values (' +','.join(itertools.repeat('?', s.ncols)) +");"
+            for rownum in xrange(1, s.nrows):
+                db_cursor.execute(tmp_sql, s.row_values(rownum))
 
     db_conn.commit()
     #Only do this if we're not working on an externally-opened db
