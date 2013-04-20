@@ -52,7 +52,7 @@ def xls2db(infile, outfile, column_name_start_row=0, data_start_row=1):
                 # (requires delimited identifiers) and missing column types
                 column_names.append(colname)
             
-            tmp_sql = 'create table "' + s.name + '" ('+ ','.join(column_names) +");"
+            tmp_sql = 'create table "' + s.name + '" ("'+ '", "'.join(column_names) +'");'
             log.debug('DDL %r', tmp_sql)
             db_cursor.execute(tmp_sql)
         
