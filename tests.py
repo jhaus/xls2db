@@ -42,6 +42,22 @@ class AllTests(unittest.TestCase):
         finally:
             db.close()
 
+    def test_simple_test(self):
+        xls_filename, dbname = 'simple_test.xls', ':memory:'
+        db = sqlite3.connect(dbname)
+        try:
+            c = db.cursor()
+            do_one(xls_filename, db)
+            c.execute("SELECT tbl_name FROM sqlite_master WHERE type='table'")
+            rows = c.fetchall()
+            self.assertEqual(rows, [(u'simple_test',)])
+            
+            c.execute("SELECT * FROM simple_test ORDER BY 1")
+            rows = c.fetchall()
+            self.assertEqual(rows, [(1.0, u'one'), (2.0, u'two'), (3.0, u'three')])
+        finally:
+            db.close()
+
 
 def main():
     # Some tests may use data files (without a full pathname)
