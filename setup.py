@@ -1,4 +1,8 @@
-from distutils.core import setup
+try:
+    import setuptools
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 setup(
     name = "xls2db",
