@@ -1,0 +1,7 @@
+*.log
+*.pot
+*.pyc
+*.db
+
+build/
+xls2db.egg-info/
