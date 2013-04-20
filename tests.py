@@ -58,6 +58,27 @@ class AllTests(unittest.TestCase):
         finally:
             db.close()
 
+    def test_simple_test_twice(self):
+        xls_filename, dbname = 'simple_test.xls', ':memory:'
+        db = sqlite3.connect(dbname)
+        c = db.cursor()
+        
+        def do_one_simple_conversion():
+            do_one(xls_filename, db)
+            c.execute("SELECT tbl_name FROM sqlite_master WHERE type='table'")
+            rows = c.fetchall()
+            self.assertEqual(rows, [(u'simple_test',)])
+            
+            c.execute("SELECT * FROM simple_test ORDER BY 1")
+            rows = c.fetchall()
+            self.assertEqual(rows, [(1.0, u'one'), (2.0, u'two'), (3.0, u'three')])
+        
+        try:
+            do_one_simple_conversion()
+            self.assertRaises(sqlite3.OperationalError, do_one_simple_conversion)
+        finally:
+            db.close()
+
 
 def main():
     # Some tests may use data files (without a full pathname)
