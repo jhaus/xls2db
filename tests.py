@@ -30,6 +30,18 @@ class AllTests(unittest.TestCase):
         # For now just see if it works without error
         do_one(xls_filename, dbname)
 
+    def test_empty_worksheet(self):
+        xls_filename, dbname = 'empty_worksheet_test.xls', ':memory:'
+        db = sqlite3.connect(dbname)
+        try:
+            c = db.cursor()
+            do_one(xls_filename, db)
+            c.execute("SELECT tbl_name FROM sqlite_master WHERE type='table'")
+            rows = c.fetchall()
+            self.assertEqual(rows, [(u'simple_test',)])
+        finally:
+            db.close()
+
 
 def main():
     # Some tests may use data files (without a full pathname)
