@@ -1,6 +1,8 @@
-import logging
+#!/usr/bin/env python
+# coding=utf-8
+
+import os, itertools, logging
 import sqlite3 as sqlite
-import itertools
 
 import xlrd
 
@@ -11,27 +13,31 @@ log.setLevel(logging.ERROR)
 #log.setLevel(logging.DEBUG)
 
 
-def xls2db(infile, outfile, column_name_start_row=0, data_start_row=1):
+def xls2db(infile, outfile=None, column_name_start_row=0, data_start_row=1):
     """
     Convert an xls file into an sqlite db!
     """
     #Now you can pass in a workbook!
-    if type(infile) == str:
+    if isinstance(infile, basestring):
         wb = xlrd.open_workbook(infile)
-    elif type(infile) == xlrd.Book:
+    elif isinstance(infile, xlrd.Book):
         wb = infile
+        infile = "default"
     else:
-        raise TypeError
+        raise TypeError("infile must be a string or xlrd.Book")
 
     #Now you can pass in a sqlite connection!
-    if type(outfile) == str:
+    if outfile is None:
+        outfile = os.path.splitext(infile)[0] + '.sqlite'
+
+    if isinstance(outfile, basestring):
         db_conn = sqlite.connect(outfile)
         db_cursor = db_conn.cursor()
-    elif type(outfile) == sqlite.Connection:
+    elif isinstance(outfile, sqlite.Connection):
         db_conn = outfile
         db_cursor = db_conn.cursor()
     else:
-        raise TypeError
+        raise TypeError("outfile must be a string or sqlite.Connection")
 
     # hack, avoid plac's annotations....
     column_name_start_row = int(column_name_start_row)
@@ -65,9 +71,10 @@ def xls2db(infile, outfile, column_name_start_row=0, data_start_row=1):
 
     db_conn.commit()
     #Only do this if we're not working on an externally-opened db
-    if type(outfile) == str:
+    if isinstance(outfile, basestring):
         db_cursor.close()
         db_conn.close()
+
 
 def db2xls(infile, outfile):
     """
@@ -75,3 +82,9 @@ def db2xls(infile, outfile):
     Some issues: one needs to be able to figure out what the table names are!
     """
     raise NotImplementedError
+
+
+if __name__ == "__main__":
+    #Apparently this thing's pretty magical.
+    import plac
+    plac.call(xls2db)
