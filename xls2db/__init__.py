@@ -1,10 +1,17 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-import os, itertools, logging
+import sys, os, itertools, logging
 import sqlite3 as sqlite
 
 import xlrd
+
+
+if sys.version_info >= (3,):
+    string_types = str,
+else:
+    string_types = basestring,
+    range = xrange
 
 
 logging.basicConfig() ## NO debug, no info. But logs warnings
@@ -18,7 +25,7 @@ def xls2db(infile, outfile=None, column_name_start_row=0, data_start_row=1):
     Convert an xls file into an sqlite db!
     """
     #Now you can pass in a workbook!
-    if isinstance(infile, basestring):
+    if isinstance(infile, string_types):
         wb = xlrd.open_workbook(infile)
     elif isinstance(infile, xlrd.Book):
         wb = infile
@@ -30,7 +37,7 @@ def xls2db(infile, outfile=None, column_name_start_row=0, data_start_row=1):
     if outfile is None:
         outfile = os.path.splitext(infile)[0] + '.sqlite'
 
-    if isinstance(outfile, basestring):
+    if isinstance(outfile, string_types):
         db_conn = sqlite.connect(outfile)
         db_cursor = db_conn.cursor()
     elif isinstance(outfile, sqlite.Connection):
@@ -49,7 +56,7 @@ def xls2db(infile, outfile=None, column_name_start_row=0, data_start_row=1):
         # I'm not sure what to do about that!
         if s.nrows > column_name_start_row:
             column_names = []
-            for j in xrange(s.ncols):
+            for j in range(s.ncols):
                 # FIXME TODO deal with embedded double quotes
                 colname = s.cell(column_name_start_row, j).value
                 if colname:
@@ -68,14 +75,14 @@ def xls2db(infile, outfile=None, column_name_start_row=0, data_start_row=1):
 
         if s.nrows > data_start_row:
             tmp_sql = 'insert into "' + s.name + '" values (' +','.join(itertools.repeat('?', s.ncols)) +");"
-            for rownum in xrange(data_start_row, s.nrows):
+            for rownum in range(data_start_row, s.nrows):
                 bind_params = s.row_values(rownum)
                 log.debug('DML %r, %r', tmp_sql, bind_params)
                 db_cursor.execute(tmp_sql, bind_params)
 
     db_conn.commit()
     #Only do this if we're not working on an externally-opened db
-    if isinstance(outfile, basestring):
+    if isinstance(outfile, string_types):
         db_cursor.close()
         db_conn.close()
 
@@ -89,9 +96,11 @@ def db2xls(infile, outfile):
 
 
 if __name__ == "__main__":
-    import sys
-    fse = sys.getfilesystemencoding()
-    argv = [i.decode(fse) for i in sys.argv]
+    if sys.version_info >= (3,):
+        argv = sys.argv
+    else:
+        fse = sys.getfilesystemencoding()
+        argv = [i.decode(fse) for i in sys.argv]
 
     #Apparently this thing's pretty magical.
     import plac
