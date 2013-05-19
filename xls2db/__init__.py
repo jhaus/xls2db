@@ -52,16 +52,20 @@ def xls2db(infile, outfile=None, column_name_start_row=0, data_start_row=1):
             for j in xrange(s.ncols):
                 # FIXME TODO deal with embedded double quotes
                 colname = s.cell(column_name_start_row, j).value
-                if not colname:
-                    colname = 'col%d' % (j + 1,)
+                if colname:
+                    colname = '"c%d"' % (colname,) if isinstance(colname, float) else \
+                              u'"%s"' % (colname,)
+                else:
+                    colname = '"col%d"' % (j + 1,)
                 # FIXME TODO deal with embedded spaces in names
                 # (requires delimited identifiers) and missing column types
                 column_names.append(colname)
-            
-            tmp_sql = 'create table "' + s.name + '" ('+ ','.join(column_names) +");"
+
+            column_names = ','.join(column_names)
+            tmp_sql = u'create table "' + s.name + '" (' + column_names + ');'
             log.debug('DDL %r', tmp_sql)
             db_cursor.execute(tmp_sql)
-        
+
         if s.nrows > data_start_row:
             tmp_sql = 'insert into "' + s.name + '" values (' +','.join(itertools.repeat('?', s.ncols)) +");"
             for rownum in xrange(data_start_row, s.nrows):
@@ -85,6 +89,10 @@ def db2xls(infile, outfile):
 
 
 if __name__ == "__main__":
+    import sys
+    fse = sys.getfilesystemencoding()
+    argv = [i.decode(fse) for i in sys.argv]
+
     #Apparently this thing's pretty magical.
     import plac
-    plac.call(xls2db)
+    plac.call(xls2db, argv[1:])
