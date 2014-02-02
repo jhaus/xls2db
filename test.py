@@ -68,6 +68,76 @@ class AllTests(unittest.TestCase):
                 msg = u'header ' + header + u' in ' + table
                 self.assertTrue(re.search(header, row[0]), 'x ' + msg)
 
+    def test_comma(self):
+        xls_filename, dbname = 'comma_test.xls', ':memory:'
+        do_one(xls_filename, dbname)
+        db = sqlite.connect(dbname)
+        try:
+            c = db.cursor()
+            do_one(xls_filename, db)
+            c.execute("SELECT tbl_name FROM sqlite_master WHERE type='table'")
+            rows = c.fetchall()
+            self.assertEqual(rows, [(u'comma_test',)])
+
+            c.execute("SELECT * FROM comma_test ORDER BY 1")
+            rows = c.fetchall()
+            col_names = []
+            for c_description in c.description:
+                col_names.append(c_description[0])
+            self.assertEqual(col_names, [u'col1', u'english, text'])
+            self.assertEqual(rows, [(1.0, u'one'), (2.0, u'two'), (3.0, u'three')])
+        finally:
+            db.close()
+
+    def test_empty_worksheet(self):
+        xls_filename, dbname = 'empty_worksheet_test.xls', ':memory:'
+        db = sqlite.connect(dbname)
+        try:
+            c = db.cursor()
+            do_one(xls_filename, db)
+            c.execute("SELECT tbl_name FROM sqlite_master WHERE type='table'")
+            rows = c.fetchall()
+            self.assertEqual(rows, [(u'simple_test',)])
+        finally:
+            db.close()
+
+    def test_simple_test(self):
+        xls_filename, dbname = 'simple_test.xls', ':memory:'
+        db = sqlite.connect(dbname)
+        try:
+            c = db.cursor()
+            do_one(xls_filename, db)
+            c.execute("SELECT tbl_name FROM sqlite_master WHERE type='table'")
+            rows = c.fetchall()
+            self.assertEqual(rows, [(u'simple_test',)])
+
+            c.execute("SELECT * FROM simple_test ORDER BY 1")
+            rows = c.fetchall()
+            self.assertEqual(rows, [(1.0, u'one'), (2.0, u'two'), (3.0, u'three')])
+        finally:
+            db.close()
+
+    def test_simple_test_twice(self):
+        xls_filename, dbname = 'simple_test.xls', ':memory:'
+        db = sqlite.connect(dbname)
+        c = db.cursor()
+
+        def do_one_simple_conversion():
+            do_one(xls_filename, db)
+            c.execute("SELECT tbl_name FROM sqlite_master WHERE type='table'")
+            rows = c.fetchall()
+            self.assertEqual(rows, [(u'simple_test',)])
+
+            c.execute("SELECT * FROM simple_test ORDER BY 1")
+            rows = c.fetchall()
+            self.assertEqual(rows, [(1.0, u'one'), (2.0, u'two'), (3.0, u'three')])
+
+        try:
+            do_one_simple_conversion()
+            self.assertRaises(sqlite.OperationalError, do_one_simple_conversion)
+        finally:
+            db.close()
+
 
 def main():
     # Some tests may use data files (without a full pathname)
