@@ -13,19 +13,24 @@ except ImportError:
     import unittest
     unittest2 = None
 
-from xls2db import xls2db
+import xls2db
+
+
+def do_one(xls_filename, dbname):
+    xls2db.xls2db(xls_filename, dbname)
 
 
 class AllTests(unittest.TestCase):
     def test_stackhaus(self):
+        xls_filename, dbname = 'stackhaus.xls', 'stackhaus.db'
         try:
-            os.remove("example/stackhaus.db")
+            os.remove(dbname)
         except:
             pass
 
-        xls2db("example/stackhaus.xls", "example/stackhaus.db")
+        do_one(xls_filename, dbname)
 
-        stackhaus = sqlite.connect("example/stackhaus.db")
+        stackhaus = sqlite.connect(dbname)
 
         tests = {
             "locations": [
@@ -70,14 +75,18 @@ def main():
     # test is not being run from the same directory
     testpath = os.path.dirname(__file__)
     if testpath:
-        try:
-            os.chdir(testpath)
-        except OSError:
-            # this may be Jython 2.2 under OpenJDK...
-            if sys.version_info <= (2, 3):
-                pass
-            else:
-                raise
+        testpath = os.path.join(testpath, 'example')
+    else:
+        # Just assume current directory
+        testpath = 'example'
+    try:
+        os.chdir(testpath)
+    except OSError:
+        # this may be Jython 2.2 under OpenJDK...
+        if sys.version_info <= (2, 3):
+            pass
+        else:
+            raise
     unittest.main()
 
 if __name__ == '__main__':
