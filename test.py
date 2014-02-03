@@ -70,7 +70,6 @@ class AllTests(unittest.TestCase):
 
     def test_comma(self):
         xls_filename, dbname = 'comma_test.xls', ':memory:'
-        do_one(xls_filename, dbname)
         db = sqlite.connect(dbname)
         try:
             c = db.cursor()
