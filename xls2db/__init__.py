@@ -20,9 +20,11 @@ log.setLevel(logging.ERROR)
 #log.setLevel(logging.DEBUG)
 
 
-def xls2db(infile, outfile=None, column_name_start_row=0, data_start_row=1):
+def xls2db(infile, outfile=None, column_name_start_row=0, data_start_row=1, do_drop=False):
     """
     Convert an xls file into an sqlite db!
+
+    do_drop - drops table before attempting to create.
     """
     #Now you can pass in a workbook!
     if isinstance(infile, string_types):
@@ -50,6 +52,15 @@ def xls2db(infile, outfile=None, column_name_start_row=0, data_start_row=1):
     column_name_start_row = int(column_name_start_row)
     data_start_row = int(data_start_row)
     for s in wb.sheets():
+
+        if do_drop:
+            tmp_sql = 'drop table "%s"' % s.name
+            log.debug('DDL %r', tmp_sql)
+            try:
+                db_cursor.execute(tmp_sql)
+            except sqlite.OperationalError:
+                # Assume table did not exist and ignore
+                pass
 
         # Create the table.
         # Vulnerable to sql injection because ? is only able to handle inserts
